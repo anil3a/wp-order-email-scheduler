@@ -1,0 +1,18 @@
+table.widefat {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table.widefat th, table.widefat td {
+    text-align: left;
+    padding: 10px;
+}
+
+table.widefat th {
+    background-color: #f1f1f1;
+}
+
+table.widefat tr:nth-child(even) {
+    background-color: #f9f9f9;
+}

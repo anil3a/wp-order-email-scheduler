@@ -7,11 +7,18 @@ The **AP Wordpress Custom Email Scheduler** WordPress plugin provides an easy wa
 ## Features
 
 - Schedule emails to customers based on WooCommerce order status.
+- 3 Templates to choose default email template to send email with.
 - Customize the email subject and body, with support for dynamic placeholders.
 - Search for specific orders using an AJAX-powered search bar.
 - Test email functionality by sending emails for specific orders directly from the settings page.
 - Configure email scheduling delay times (e.g., send an email 2 hours after order status changes).
 - Styled admin interface for easy management.
+- **Live Orders** to see what orders are within the range and their status, attempts, and all details
+- **Email log** to see email sent log, can include processing, sent and failed.
+   - `processing` if system to trying to send and will not be picked up if it runs sgain.
+   - `sent` If email is sent succesfully
+   - `failed`  If email sending is failed
+
 
 ## Installation
 
@@ -23,7 +30,7 @@ The **AP Wordpress Custom Email Scheduler** WordPress plugin provides an easy wa
 
 ## Configuration
 
-1. Navigate to **Settings > AP WP Email Scheduler** in the WordPress admin dashboard.
+1. Navigate to **Settings > APWP Scheduler** in the WordPress admin dashboard.
 2. Configure the following options:
    - **Email Delay (in Hours):** Set the delay time for sending emails after the order is marked as "Processing."
    - **Email Subject:** Customize the email subject using dynamic placeholders.
