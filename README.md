@@ -74,6 +74,16 @@ You can use the following placeholders in your email templates to dynamically in
 
 ## Changelog
 
+## Version 2.0.0
+- Added multiple email templates
+- Ability to change subject per email templates
+- Ability to disable cron schedule with enable/disable
+- Ability to Log email attempts to prevent duplicate and see records
+- Added Two new pages Live orders and Email log
+- Live Orders will show orders in that offset date range and also email log status
+- Email Log will show log for email template with some more infomration about sending email
+- Fix wp cron schedule event for this auto schedule and set to hourly to run
+
 ### Version 1.0.0
 
 - Initial release.
