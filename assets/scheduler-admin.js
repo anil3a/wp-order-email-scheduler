@@ -1,26 +1,27 @@
 jQuery(document).ready(function ($) {
-    $('#APWP_order_search_button').on('click', function () {
-        const orderId = $('#APWP_order_search_input').val();
+    $('#apwp_order_search_button').on('click', function () {
+        const orderId = $('#apwp_order_search_input').val();
         if (!orderId) {
             alert('Please enter an Order ID.');
             return;
         }
 
-        $.post(ajaxurl, { action: 'APWP_search_order', order_id: orderId }, function (response) {
+        $.post(ajaxurl, { action: 'apwp_search_order', order_id: orderId }, function (response) {
+            console.log('search ajax response:', response);
+            
             if (response.success) {
-                $('#APWP_order_search_result').html(`<div style="color:green;">${response.data}</div>`);
+                $('#apwp_order_search_result').html(`<div style="color:green;">${response.data}</div>`);
             } else {
-                $('#APWP_order_search_result').html(`<div style="color:red;margin-bottom:120px;">${response.data}</div>`);
+                $('#apwp_order_search_result').html(`<div style="color:red;margin-bottom:120px;">${response.data}</div>`);
             }
         });
     });
     // Send email to customer
-    $(document).on('click', '#APWP_send_email_button', function () {
+    $(document).on('click', '#apwp_send_email_button', function () {
         const orderId = $(this).data('order-id');
-        var orderID = $(this).data('order-id');
         var security = APWP_scheduler.security;
 
-        if (!orderID) {
+        if (!orderId) {
             alert('Invalid order ID.');
             return;
         }
@@ -29,30 +30,26 @@ jQuery(document).ready(function ($) {
         var $button = $(this);
         $button.prop('disabled', true).text('Sending...');
 
-
-        if (!orderId) {
-            alert('Order ID is missing.');
-            return;
-        }
-
         $.ajax({
             url: APWP_scheduler.ajax_url,
             type: 'POST',
             data: {
-                action: 'APWP_send_email',
-                order_id: orderID,
+                action: 'apwp_send_email',
+                order_id: orderId,
                 security: security,
             },
             success: function (response) {
                 $button.prop('disabled', false).text('Send Email to Customer');
+                console.log(response);
+
                 if (response.success) {
-                    $('#APWP_order_search_result').append(
+                    $('#apwp_order_search_result').append(
                         `<p style="color: green; font-weight: bold;">` +
                             `<strong>${new Date().toLocaleString()}</strong> -  ${response.data}` +
                         `</p>`
                     );
                 } else {
-                    $('#APWP_order_search_result').append(
+                    $('#apwp_order_search_result').append(
                         `<p style="color: red;">` +
                             `<strong>${new Date().toLocaleString()}</strong> -  ${response.data}` +
                         `</p>`

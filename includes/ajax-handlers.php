@@ -3,8 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-add_action('wp_ajax_APWP_search_order', 'APWP_ajax_search_order');
-function APWP_ajax_search_order()
+add_action('wp_ajax_apwp_search_order', 'apwp_ajax_search_order');
+function apwp_ajax_search_order()
 {
     if (!current_user_can('manage_options')) {
         wp_send_json_error('You do not have permission to access this resource.');
@@ -24,9 +24,9 @@ function APWP_ajax_search_order()
         'order_status' => wc_get_order_status_name($order->get_status()),
         'billing_name' => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
     ];
-    
+
     $response_html = "
-       <table class='APWP-order-details'>
+       <table class='apwp-order-details'>
             <tr>
                 <th>Order Number</th>
                 <td>{$response['order_number']}</td>
@@ -53,14 +53,14 @@ function APWP_ajax_search_order()
             </tr>
             <tr>
                 <td colspan='2' class='action-cell'>
-                    <button id='APWP_send_email_button' class='button-primary' data-order-id='{$response['order_id']}'>Send Email to Customer</button>
+                    <button id='apwp_send_email_button' class='button-primary' data-order-id='{$response['order_id']}'>Send Email to Customer</button>
                 </td>
             </tr>
         </table>
-        <div class='APWP-email-info'>
+        <div class='apwp-email-info'>
             This email will be sent to: <strong>{$order->get_billing_email()}</strong>
         </div>
     ";
-    
+
     wp_send_json_success($response_html);
 }

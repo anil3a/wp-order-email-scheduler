@@ -73,7 +73,7 @@ class APWP_Scheduler_Admin
             time(),
             true
         );
-        wp_localize_script('apwp-scheduler-admin', 'apwp_scheduler', [
+        wp_localize_script('apwp-scheduler-admin', 'APWP_scheduler', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'security' => wp_create_nonce('apwp_scheduler_nonce'),
         ]);
@@ -125,7 +125,7 @@ class APWP_Scheduler_Admin
                     <tr>
                         <th scope="row"><label for="apwp_email_delay">Email Delay (Hours)</label></th>
                         <td>
-                            <input type="number" id="apwp_email_delay" name="apwp_email_delay" value="<?php echo esc_attr($email_delay); ?>" min="-100" max="100" />
+                            <input type="number" id="apwp_email_delay" name="apwp_email_delay" value="<?php echo esc_attr($email_delay); ?>" min="0" max="169" />
                             <p class="description">Enter the delay (in hours) after the order status changes to "Processing" before sending the email.</p>
                         </td>
                     </tr>
@@ -264,10 +264,11 @@ class APWP_Scheduler_Admin
         $wp_datetime = current_datetime();
         $current_datetime = $wp_datetime->format($dt_format);
         $delay_hours = (int) get_option('apwp_email_delay', 2);
-        $wp_datetime = $wp_datetime->modify( $delay_hours .' hours');
+        $wp_datetime = $wp_datetime->modify( (($delay_hours+1)* -1) .' hours');
         $cutoff_datetime = $wp_datetime->format($dt_format);
         
         $timezone_in_db = 'UTC';
+        $wp_datetime->setTime ( $wp_datetime->format("H"), 0, 0);
         $cutoff_time = $wp_datetime->setTimezone(new DateTimeZone($timezone_in_db))->getTimestamp();
 
         $args = [
@@ -307,14 +308,32 @@ class APWP_Scheduler_Admin
             echo '<th>Email</th>';
             echo '<th>Date Created</th>';
             echo '<th>Status</th>';
+            echo '<th>Time to sent email</th>';
             echo '<th>Log Description</th>';
             echo '</tr>';
             echo '</thead>';
             echo '<tbody>';
 
-            foreach ($orders as $order) {
+            $current_datetime_obj = current_datetime();
+            foreach ($orders as $order)
+            {
                 $_emaillog_description = '';
                 $_ord_id = $order->get_id();
+                $_ord_createdat_datetime = $order->get_date_created();
+                $_ord_createdat_str = $_ord_createdat_datetime->format($dt_format);
+                $diff = $current_datetime_obj->diff($_ord_createdat_datetime);
+                $_title = 'Created '. $diff->format('%h hours %i minutes') .' ago';
+                $diff_in_seconds = $diff->h * 3600 + $diff->i * 60 + $diff->s;
+
+                $_email_send_status = '';
+                if ($diff_in_seconds > ($delay_hours *60*60) ) {
+                    $_email_send_status = 'Ready to send';
+                } else {
+                    $_remaing_time_in_Seconds = ($delay_hours *60*60) - $diff_in_seconds;
+                    $_hours = floor($_remaing_time_in_Seconds / 3600);
+                    $_minutes = floor(($_remaing_time_in_Seconds % 3600) / 60);
+                    $_email_send_status = $_hours . ' hours ' . $_minutes . ' minutes left';
+                }
 
                 if (isset($emaillogs_order[$_ord_id])) {
                     $_emaillog_description = '
@@ -325,6 +344,17 @@ class APWP_Scheduler_Admin
                             <strong>Result:</strong> ' . esc_html($emaillogs_order[$_ord_id]->result) . '<br>
                         </div>
                     ';
+                    if ($emaillogs_order[$_ord_id]->status == 'sent') {
+                        $_email_send_status = 'Email sent successfully';
+                    } else if ($emaillogs_order[$_ord_id]->status == 'processing') {
+                        $_email_send_status = 'Email may not be triggered';
+                    } else if ($emaillogs_order[$_ord_id]->status == 'failed') {
+                        if ($emaillogs_order[$_ord_id]->attempts > 3) {
+                            $_email_send_status = 'Email sending failed after 3 attempts';
+                        } else {
+                            $_email_send_status = 'Email sending failed. Retry scheduled';
+                        }
+                    }
                 }
 
                 echo '<tr>';
@@ -332,8 +362,9 @@ class APWP_Scheduler_Admin
                 echo '<td>' . esc_html($order->get_order_number()) . '</td>';
                 echo '<td>' . esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()) . '</td>';
                 echo '<td>' . esc_html($order->get_billing_email()) . '</td>';
-                echo '<td>' . esc_html($order->get_date_created()->date('Y-m-d h:i a')) . '</td>';
+                echo '<td>' . $_ord_createdat_str . '</td>';
                 echo '<td>' . esc_html($order->get_status()) . '</td>';
+                echo '<td title="'. $_title .'">' . $_email_send_status . '</td>';
                 echo '<td>' . $_emaillog_description . '</td>';
                 echo '</tr>';
             }
