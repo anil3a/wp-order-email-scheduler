@@ -64,6 +64,8 @@ class APWP_Scheduler_Admin
     public function register_settings()
     {
         register_setting('apwp_scheduler_settings', 'apwp_email_enabled');
+        register_setting('apwp_scheduler_settings', 'apwp_email_from_name');
+        register_setting('apwp_scheduler_settings', 'apwp_email_from_email');
         register_setting('apwp_scheduler_settings', 'apwp_email_delay');
         register_setting('apwp_scheduler_settings', 'apwp_email_order_offset');
         register_setting('apwp_scheduler_settings', 'apwp_email_attempts');
@@ -107,6 +109,9 @@ class APWP_Scheduler_Admin
         $apwp_email_order_offset = get_option('apwp_email_order_offset', 3);
         $apwp_email_attempts = get_option('apwp_email_attempts', 3);
 
+        $apwp_email_from_name = get_option('apwp_email_from_name', get_bloginfo('name'));
+        $apwp_email_from_email = get_option('apwp_email_from_email', get_bloginfo('admin_email'));
+
         $template_1_subj = get_option('apwp_email_template_1_subject', 'Template 1: '. $subject);
         $template_1_body = get_option('apwp_email_template_1_body', 'Dear {customer_name} from Template 1,'. $body);
 
@@ -132,6 +137,24 @@ class APWP_Scheduler_Admin
                                 <option value="no" <?php selected($email_enabled, 'no'); ?>>No</option>
                             </select>
                             <p class="description">Set to "No" to disable all scheduled emails. Manual emails can still be sent.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row"><label for="apwp_email_from_name">Your From Email</label></th>
+                        <td>
+                            <input type="text" id="apwp_email_from_name" name="apwp_email_from_name" value="<?php 
+                                echo esc_attr($apwp_email_from_name);
+                            ?>" style="width: 100%;max-width: 220px;" />
+
+                            &nbsp;
+                            <label for="apwp_email_from_email">Email</label>
+                            <input type="email" id="apwp_email_from_email" name="apwp_email_from_email" value="<?php 
+                                echo esc_attr($apwp_email_from_email);
+                            ?>" style="width: 100%;max-width: 400px;" />
+
+                            <p class="description">Enter From email address and the name to appear. Leave both blank to use default</p>
+                            <p class="description">Default: <?php echo  get_bloginfo('name') .'<'. get_bloginfo('admin_email') .'>'; ?></p>
                         </td>
                     </tr>
     

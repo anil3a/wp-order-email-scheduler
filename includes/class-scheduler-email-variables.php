@@ -74,7 +74,7 @@ class APWP_Scheduler_Email_Variables
             '{order_number}'     => $invoice_number,
             '{customer_name}'    => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             '{customer_email}'   => $order->get_billing_email(),
-            '{order_date}'       => $order->get_date_created() ? $order->get_date_created()->date($dt_format) : '',
+            '{order_date}'       => $order->get_date_created()->date($dt_format),
             '{order_total}'      => wc_price($order->get_total()),
             '{billing_address}'  => $order->get_formatted_billing_address() ?: '',
             '{shipping_address}' => $order->get_formatted_shipping_address() ?: '',
