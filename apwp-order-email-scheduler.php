@@ -25,7 +25,7 @@ add_action('plugins_loaded', function () {
     APWP_Scheduler_Core::instance();
 });
 
-register_activation_hook(__FILE__, ['APWP_Activator', 'activate']);
-register_deactivation_hook(__FILE__, ['APWP_Deactivator', 'deactivate']);
+register_activation_hook(__FILE__, ['APWP_Scheduler_Activator', 'activate']);
+register_deactivation_hook(__FILE__, ['APWP_Scheduler_Deactivator', 'deactivate']);
 
 new APWP_Scheduler();

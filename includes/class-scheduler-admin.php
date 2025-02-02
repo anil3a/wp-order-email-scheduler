@@ -2,7 +2,17 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-
+/**
+ * Class APWP_Scheduler_Admin
+ * 
+ * The Plugin Admin View class.
+ * 
+ * This class is responsible for views plugin pages.
+ * 
+ * @since      3.0.0
+ * @package    WP_Order_Email_Scheduler/Classes
+ * @author     Anil Prajapati <anilprz3@gmail.com>
+ */
 class APWP_Scheduler_Admin
 {
     private static $instance;
@@ -55,6 +65,8 @@ class APWP_Scheduler_Admin
     {
         register_setting('apwp_scheduler_settings', 'apwp_email_enabled');
         register_setting('apwp_scheduler_settings', 'apwp_email_delay');
+        register_setting('apwp_scheduler_settings', 'apwp_email_order_offset');
+        register_setting('apwp_scheduler_settings', 'apwp_email_attempts');
         register_setting('apwp_scheduler_settings', 'apwp_email_template_1_subject');
         register_setting('apwp_scheduler_settings', 'apwp_email_template_1_body');
         register_setting('apwp_scheduler_settings', 'apwp_email_template_2_subject');
@@ -73,7 +85,7 @@ class APWP_Scheduler_Admin
             time(),
             true
         );
-        wp_localize_script('apwp-scheduler-admin', 'apwp_scheduler', [
+        wp_localize_script('apwp-scheduler-admin', 'APWP_scheduler', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'security' => wp_create_nonce('apwp_scheduler_nonce'),
         ]);
@@ -87,11 +99,13 @@ class APWP_Scheduler_Admin
 
     public function settings_page_content()
     {
-        $variables = APWP_Email_Variables::get_variables();
+        $variables = APWP_Scheduler_Email_Variables::get_variables();
         $subject = 'Your Order is being processed! ';
         $body = '<br><br>Your order {order_id} is being processed. Total amount: {order_total}.<br><br>Thank you for choosing WP Scheduler APWP!';
         $email_enabled = get_option('apwp_email_enabled', 'yes');
-        $email_delay = get_option('apwp_email_delay', 2);
+        $apwp_email_delay = get_option('apwp_email_delay', 2);
+        $apwp_email_order_offset = get_option('apwp_email_order_offset', 3);
+        $apwp_email_attempts = get_option('apwp_email_attempts', 3);
 
         $template_1_subj = get_option('apwp_email_template_1_subject', 'Template 1: '. $subject);
         $template_1_body = get_option('apwp_email_template_1_body', 'Dear {customer_name} from Template 1,'. $body);
@@ -125,8 +139,26 @@ class APWP_Scheduler_Admin
                     <tr>
                         <th scope="row"><label for="apwp_email_delay">Email Delay (Hours)</label></th>
                         <td>
-                            <input type="number" id="apwp_email_delay" name="apwp_email_delay" value="<?php echo esc_attr($email_delay); ?>" min="-100" max="100" />
+                            <input type="number" id="apwp_email_delay" name="apwp_email_delay" value="<?php echo esc_attr($apwp_email_delay); ?>" min="0" max="169" step="0.01" />
                             <p class="description">Enter the delay (in hours) after the order status changes to "Processing" before sending the email.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Order to find -->
+                    <tr>
+                        <th scope="row"><label for="apwp_email_order_offset">Order to find to send email (Hours)</label></th>
+                        <td>
+                            <input type="number" id="apwp_email_order_offset" name="apwp_email_order_offset" value="<?php echo esc_attr($apwp_email_order_offset); ?>" min="0" max="200" step="0.01" />
+                            <p class="description">Find your orders to send email to. it is usually +1 hour your delayed hours to just fina extra Order if any missing.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Email Attempts -->
+                    <tr>
+                        <th scope="row"><label for="apwp_email_attempts">Failed Email Attempts</label></th>
+                        <td>
+                            <input type="number" id="apwp_email_attempts" name="apwp_email_attempts" value="<?php echo esc_attr($apwp_email_attempts); ?>" min="1" max="10" step="1" />
+                            <p class="description">Number of attempts to send the email before marking it as failed.</p>
                         </td>
                     </tr>
     
@@ -264,10 +296,12 @@ class APWP_Scheduler_Admin
         $wp_datetime = current_datetime();
         $current_datetime = $wp_datetime->format($dt_format);
         $delay_hours = (int) get_option('apwp_email_delay', 2);
-        $wp_datetime = $wp_datetime->modify( $delay_hours .' hours');
+        $apwp_email_order_offset = get_option('apwp_email_order_offset', 3);
+        $wp_datetime = $wp_datetime->modify( (($delay_hours+$apwp_email_order_offset)* -1) .' hours');
         $cutoff_datetime = $wp_datetime->format($dt_format);
         
         $timezone_in_db = 'UTC';
+        $wp_datetime->setTime ( $wp_datetime->format("H"), 0, 0);
         $cutoff_time = $wp_datetime->setTimezone(new DateTimeZone($timezone_in_db))->getTimestamp();
 
         $args = [
@@ -307,14 +341,32 @@ class APWP_Scheduler_Admin
             echo '<th>Email</th>';
             echo '<th>Date Created</th>';
             echo '<th>Status</th>';
+            echo '<th>Time to sent email</th>';
             echo '<th>Log Description</th>';
             echo '</tr>';
             echo '</thead>';
             echo '<tbody>';
 
-            foreach ($orders as $order) {
+            $current_datetime_obj = current_datetime();
+            foreach ($orders as $order)
+            {
                 $_emaillog_description = '';
                 $_ord_id = $order->get_id();
+                $_ord_createdat_datetime = $order->get_date_created();
+                $_ord_createdat_str = $_ord_createdat_datetime->format($dt_format);
+                $diff = $current_datetime_obj->diff($_ord_createdat_datetime);
+                $_title = 'Created '. $diff->format('%h hours %i minutes') .' ago';
+                $diff_in_seconds = $diff->h * 3600 + $diff->i * 60 + $diff->s;
+
+                $_email_send_status = '';
+                if ($diff_in_seconds > ($delay_hours *60*60) ) {
+                    $_email_send_status = 'Ready to send';
+                } else {
+                    $_remaing_time_in_Seconds = ($delay_hours *60*60) - $diff_in_seconds;
+                    $_hours = floor($_remaing_time_in_Seconds / 3600);
+                    $_minutes = floor(($_remaing_time_in_Seconds % 3600) / 60);
+                    $_email_send_status = $_hours . ' hours ' . $_minutes . ' minutes left';
+                }
 
                 if (isset($emaillogs_order[$_ord_id])) {
                     $_emaillog_description = '
@@ -325,15 +377,34 @@ class APWP_Scheduler_Admin
                             <strong>Result:</strong> ' . esc_html($emaillogs_order[$_ord_id]->result) . '<br>
                         </div>
                     ';
+                    if ($emaillogs_order[$_ord_id]->status == 'sent') {
+                        $_email_send_status = 'Email sent successfully';
+                    } else if ($emaillogs_order[$_ord_id]->status == 'processing') {
+                        $_email_send_status = 'Email may not be triggered';
+                    } else if ($emaillogs_order[$_ord_id]->status == 'failed') {
+                        if ($emaillogs_order[$_ord_id]->attempts > 3) {
+                            $_email_send_status = 'Email sending failed after 3 attempts';
+                        } else {
+                            $_email_send_status = 'Email sending failed. Retry scheduled';
+                        }
+                    }
+                }
+
+                $order_url = admin_url('post.php?post=' . $_ord_id . '&action=edit'); // WooCommerce order edit page
+                $invoice_number = $order->get_meta('_wcpdf_invoice_number');
+
+                if (empty($invoice_number)) {
+                    $invoice_number = $order->get_order_number();
                 }
 
                 echo '<tr>';
-                echo '<td>' . esc_html($_ord_id) . '</td>';
-                echo '<td>' . esc_html($order->get_order_number()) . '</td>';
+                echo '<td><a href="' . esc_url($order_url) . '">#' . esc_html($_ord_id) . '</a></td>';
+                echo '<td>' . esc_html($invoice_number) . '</td>';
                 echo '<td>' . esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()) . '</td>';
                 echo '<td>' . esc_html($order->get_billing_email()) . '</td>';
-                echo '<td>' . esc_html($order->get_date_created()->date('Y-m-d h:i a')) . '</td>';
+                echo '<td>' . $_ord_createdat_str . '</td>';
                 echo '<td>' . esc_html($order->get_status()) . '</td>';
+                echo '<td title="'. $_title .'">' . $_email_send_status . '</td>';
                 echo '<td>' . $_emaillog_description . '</td>';
                 echo '</tr>';
             }

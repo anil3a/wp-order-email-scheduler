@@ -1,6 +1,16 @@
 <?php
-
-class APWP_Activator
+/**
+ * Clas APWP_Scheduler_Activator
+ * 
+ * The Plugin Activator class.
+ * 
+ * This class is responsible for registering plugin to WP.
+ * 
+ * @since      3.0.0
+ * @package    WP_Order_Email_Scheduler/Classes
+ * @author     Anil Prajapati <anilprz3@gmail.com>
+ */
+class APWP_Scheduler_Activator
 {
     public static function activate()
     {

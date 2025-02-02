@@ -2,7 +2,17 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-
+/**
+ * Class APWP_Scheduler_Core
+ * 
+ * The Plugin Core class.
+ * 
+ * This class is responsible for core workflows.
+ * 
+ * @since      3.0.0
+ * @package    WP_Order_Email_Scheduler/Classes
+ * @author     Anil Prajapati <anilprz3@gmail.com>
+ */
 class APWP_Scheduler_Core
 {
     private static $instance;
@@ -26,7 +36,6 @@ class APWP_Scheduler_Core
         require_once APWP_CUSTOMEMAIL_SCHEDULER_PLUGIN_DIR . 'includes/class-scheduler-admin.php';
         require_once APWP_CUSTOMEMAIL_SCHEDULER_PLUGIN_DIR . 'includes/class-scheduler-emails.php';
         require_once APWP_CUSTOMEMAIL_SCHEDULER_PLUGIN_DIR . 'includes/class-scheduler-email-variables.php';
-        require_once APWP_CUSTOMEMAIL_SCHEDULER_PLUGIN_DIR . 'includes/ajax-handlers.php';
     }
 
     private function init_hooks()
@@ -38,6 +47,6 @@ class APWP_Scheduler_Core
         APWP_Scheduler_Emails::instance();
 
         // Initialize email variables.
-        APWP_Email_Variables::instance();
+        APWP_Scheduler_Email_Variables::instance();
     }
 }

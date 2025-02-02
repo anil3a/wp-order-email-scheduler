@@ -74,6 +74,12 @@ You can use the following placeholders in your email templates to dynamically in
 
 ## Changelog
 
+## Version 3.0.0
+- Class names and usage fixes
+- Added more settings to control email and order
+- Cron fixes and improvements
+- Added Invoice number support used by plugin for meta key `_wcpdf_invoice_number`
+
 ## Version 2.0.0
 - Added multiple email templates
 - Ability to change subject per email templates

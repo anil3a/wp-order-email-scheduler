@@ -2,8 +2,18 @@
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
-
-class APWP_Email_Variables
+/**
+ * Class APWP_Scheduler_Email_Variables
+ * 
+ * The Plugin Email variables.
+ * 
+ * This class is responsible for handling email variables.
+ * 
+ * @since      3.0.0
+ * @package    WP_Order_Email_Scheduler/Classes
+ * @author     Anil Prajapati <anilprz3@gmail.com>
+ */
+class APWP_Scheduler_Email_Variables
 {
 
     private static $instance;
@@ -51,12 +61,20 @@ class APWP_Email_Variables
             return $template;
         }
 
+        $invoice_number = $order->get_meta('_wcpdf_invoice_number');
+        if (empty($invoice_number)) {
+            $invoice_number = $order->get_order_number();
+        }
+        $d_format = get_option('date_format');
+        $t_format = get_option('time_format');
+        $dt_format = (!empty($d_format) ? $d_format : 'Y-m-d') . ' ' . (!empty($t_format) ? $t_format : 'h:i a');
+
         $variables = [
             '{order_id}'         => $order->get_id(),
-            '{order_number}'     => $order->get_order_number(),
+            '{order_number}'     => $invoice_number,
             '{customer_name}'    => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             '{customer_email}'   => $order->get_billing_email(),
-            '{order_date}'       => $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i:s') : '',
+            '{order_date}'       => $order->get_date_created() ? $order->get_date_created()->date($dt_format) : '',
             '{order_total}'      => wc_price($order->get_total()),
             '{billing_address}'  => $order->get_formatted_billing_address() ?: '',
             '{shipping_address}' => $order->get_formatted_shipping_address() ?: '',
