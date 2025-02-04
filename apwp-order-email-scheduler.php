@@ -3,7 +3,7 @@
  * Plugin Name: AP Wordpress Custom Email Scheduler
  * Description: Sends a custom email to the customer X hours after the order is paid and set to "Processing". Admin can configure the email template, delay and test email to a specific order.
  * Version: 3.1
- * Author: Anil Prajpati
+ * Author: Anil Prajapati
  * Author URI: https://anil3a.wordpress.com
  */
 
