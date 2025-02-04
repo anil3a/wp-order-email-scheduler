@@ -24,6 +24,7 @@ jQuery(document).ready(function ($) {
     // Send email to customer
     $(document).on('click', '#apwp_send_email_button', function () {
         const orderId = $(this).data('order-id');
+        const templateId = $('#apwp_default_email_template_for_test').val();
         var security = APWP_scheduler.security;
 
         if (!orderId) {
@@ -42,6 +43,7 @@ jQuery(document).ready(function ($) {
                 action: 'apwp_send_email',
                 order_id: orderId,
                 security: security,
+                template_id: templateId,
             },
             success: function (response) {
                 $button.prop('disabled', false).text('Send Email to Customer');

@@ -85,6 +85,17 @@ class APWP_Scheduler_Emails
         $log_entry->status = 'failed';
         $this->log_email_attempt($order_id, $to_email, $subject, $log_entry, $sent ? 'sent' : 'failed');
 
+        if ($sent) {
+            $_note = 'Email sent to customer at ' . $to_email . ' with subject ' . $subject;
+            $_sender = ' [Automated]';
+            $_send_user = false;
+            if ($this->manual) {
+                $_sender = ' [Manually]';
+                $_send_user = true;
+            }
+            $order->add_order_note($_note . $_sender, false, $_send_user);
+        }
+
         return $sent;
     }
 
@@ -113,8 +124,17 @@ class APWP_Scheduler_Emails
             wp_send_json_error('Order not found.');
         }
 
+        // set email template
+        $template_id = 2;
+        if (isset($_POST['template_id'])) {
+            $_template_id_check = absint($_POST['template_id']);
+            if ($_template_id_check > 0 && $_template_id_check < 4) {
+                $template_id = $_template_id_check;
+            }
+        }
+
         // Send the email
-        $email_sent = $this->send_email($order_id, $order, true);
+        $email_sent = $this->send_email($order_id, $order, true, $template_id);
 
         $to = $order->get_billing_email();
 
@@ -271,6 +291,17 @@ class APWP_Scheduler_Emails
                 <tr>
                     <th>Billing Email</th>
                     <td>{$order->get_billing_email()}</td>
+                </tr>
+                <tr>
+                    <td style='text-align: right;'>Choose email template:</td>
+                    <td>
+                         <select name='apwp_default_email_template' id='apwp_default_email_template_for_test'>
+                            <option value='1'>Template 1</option>
+                            <option value='2' selected>Template 2</option>
+                            <option value='3'>Template 3</option>
+                        </select>
+                        <p class='small'>Default email template is \"Template 2\" always when manually sending email to customer.</p>
+                    </td>
                 </tr>
                 <tr>
                     <td colspan='2' class='action-cell'>
